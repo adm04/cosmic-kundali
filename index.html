@@ -175,8 +175,26 @@
     .spinner { width:48px; height:48px; border:2px solid rgba(201,162,75,0.2); border-top-color:var(--gold); border-radius:50%; animation:ck-spin 1s linear infinite; }
     .loading-txt { font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.2em; color:var(--gold); text-transform:uppercase; }
 
-    @media (max-width:560px) { .form-grid { grid-template-columns:1fr; } .form-wrap { padding:32px 20px 36px; } }
-    @media print { #starfield,.ck-back,.ck-tabs { display:none; } #screen-form { display:none; } #screen-result { display:block!important; } body { background:white; color:black; } }
+    .adm-footer-credit {
+      text-align: center;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      color: #f2d38a;
+      text-transform: uppercase;
+      padding: 18px 20px;
+      margin-top: 40px;
+      position: relative;
+      z-index: 10;
+      border-top: 1px solid rgba(201, 162, 75, 0.3);
+      background: rgba(10, 8, 24, 0.85);
+      backdrop-filter: blur(10px);
+    }
+    .adm-footer-credit strong {
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(242, 211, 138, 0.7);
+    }
   </style>
 </head>
 <body>
@@ -987,5 +1005,6 @@ document.getElementById('btn-save').addEventListener('click', function(){
   });
 });
 </script>
+<footer class="adm-footer-credit">✦ Designed &amp; Developed by <strong>ADM</strong> ✦</footer>
 </body>
 </html>
