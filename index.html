@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cosmic Kundali — Architect of Cosmic Destiny</title>
+  <meta name="description" content="Generate your personalized Vedic birth chart (Kundali) with planetary placements, Nakshatra, Dasha, and cosmic insights — entirely offline, no data stored." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --midnight: #0a0818;
+      --deep-purple: #1c1436;
+      --violet: #34285e;
+      --gold: #c9a24b;
+      --gold-bright: #f2d38a;
+      --parchment: #ece4f7;
+      --muted: #a99bcb;
+      --rose: #c26b7a;
+      --sage: #8fb99a;
+      --input-bg: rgba(28,20,54,0.7);
+      --border: rgba(201,162,75,0.25);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 20% 0%, #211947 0%, var(--midnight) 55%),
+                  radial-gradient(ellipse at 90% 100%, #17102e 0%, var(--midnight) 60%);
+      color: var(--parchment);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* STARFIELD */
+    #starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle var(--dur,5s) ease-in-out var(--delay,0s) infinite; }
+    @keyframes twinkle { 0%,100% { opacity:0.15; transform:scale(1); } 50% { opacity:1; transform:scale(1.5); } }
+
+    /* SCREENS */
+    .screen { position: relative; z-index: 1; }
+    #screen-form { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:40px 20px; }
+    #screen-result { display:none; padding:28px 24px 60px; max-width:1100px; margin:0 auto; }
+
+    /* FORM */
+    .form-wrap {
+      width:100%; max-width:540px;
+      background:linear-gradient(160deg,rgba(52,40,94,0.45),rgba(10,8,24,0.7));
+      border:1px solid var(--border); border-radius:20px;
+      padding:44px 40px 48px; backdrop-filter:blur(12px);
+      box-shadow:0 0 60px rgba(90,60,150,0.2),0 0 120px rgba(201,162,75,0.05);
+    }
+    .form-kicker { font-family:'Cinzel',serif; letter-spacing:0.35em; font-size:10.5px; color:var(--gold); text-transform:uppercase; text-align:center; margin-bottom:12px; }
+    .form-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-style:italic; font-size:clamp(26px,5vw,40px); color:var(--gold-bright); text-align:center; line-height:1.15; margin-bottom:8px; text-shadow:0 0 22px rgba(242,211,138,0.25); }
+    .form-sub { color:var(--muted); font-size:13px; text-align:center; margin-bottom:32px; line-height:1.55; }
+
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-group { display:flex; flex-direction:column; gap:7px; }
+    .form-group.full { grid-column:1/-1; }
+    label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:var(--gold); }
+    input, select {
+      background:var(--input-bg); border:1px solid var(--border);
+      border-radius:10px; padding:11px 14px; color:var(--parchment);
+      font-family:'Inter',sans-serif; font-size:14px; width:100%;
+      outline:none; transition:border-color 0.25s,box-shadow 0.25s;
+      -webkit-appearance:none; appearance:none;
+    }
+    select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c9a24b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+    input:focus, select:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,162,75,0.12); }
+    input::placeholder { color:rgba(169,155,203,0.5); }
+    option { background:#1c1436; color:var(--parchment); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(0.7) sepia(1) hue-rotate(10deg); cursor:pointer; }
+
+    .generate-btn {
+      width:100%; margin-top:26px;
+      background:linear-gradient(135deg,rgba(201,162,75,0.28),rgba(201,162,75,0.08));
+      border:1px solid var(--gold); border-radius:14px; padding:15px;
+      color:var(--gold-bright); font-family:'Cinzel',serif;
+      font-size:13px; letter-spacing:0.15em; text-transform:uppercase;
+      cursor:pointer; transition:all 0.3s ease;
+      box-shadow:0 0 20px rgba(201,162,75,0.1);
+    }
+    .generate-btn:hover { background:linear-gradient(135deg,rgba(201,162,75,0.4),rgba(201,162,75,0.15)); box-shadow:0 0 30px rgba(201,162,75,0.25); transform:translateY(-1px); }
+    .generate-btn:active { transform:translateY(0); }
+
+    /* RESULT HEADER */
+    .ck-back { font-family:'Cinzel',serif; font-size:10.5px; letter-spacing:0.12em; color:var(--gold); border:1px solid var(--border); border-radius:999px; padding:8px 18px; background:transparent; cursor:pointer; transition:all 0.2s; margin-bottom:28px; display:inline-flex; align-items:center; gap:8px; }
+    .ck-back:hover { border-color:var(--gold); background:rgba(201,162,75,0.1); }
+    .ck-header { text-align:center; margin-bottom:22px; border-bottom:1px solid var(--border); padding-bottom:20px; }
+    .ck-kicker { font-family:'Cinzel',serif; letter-spacing:0.35em; font-size:11px; color:var(--gold); text-transform:uppercase; margin-bottom:10px; }
+    .ck-title { font-family:'Cormorant Garamond',serif; font-weight:600; font-style:italic; font-size:clamp(28px,5vw,44px); color:var(--gold-bright); margin:0 0 6px; line-height:1.1; text-shadow:0 0 22px rgba(242,211,138,0.25); }
+    .ck-subtitle { color:var(--muted); font-size:14px; max-width:560px; margin:0 auto; }
+    .ck-facts { display:flex; flex-wrap:wrap; justify-content:center; gap:10px 24px; margin-top:18px; font-size:12px; color:var(--muted); }
+    .ck-facts span b { color:var(--parchment); font-weight:600; }
+    .ck-signbadges { display:flex; justify-content:center; gap:14px; margin-top:16px; flex-wrap:wrap; }
+    .ck-badge { border:1px solid rgba(201,162,75,0.4); border-radius:10px; padding:6px 14px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.08em; color:var(--gold); background:rgba(201,162,75,0.06); }
+
+    /* TABS */
+    .ck-tabs { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:26px 0 24px; }
+    .ck-tab { font-family:'Cinzel',serif; font-size:11.5px; letter-spacing:0.06em; color:var(--muted); background:rgba(255,255,255,0.02); border:1px solid rgba(201,162,75,0.22); padding:10px 16px; border-radius:999px; cursor:pointer; transition:all 0.25s ease; display:flex; align-items:center; gap:7px; }
+    .ck-tab:hover { border-color:rgba(201,162,75,0.6); color:var(--parchment); }
+    .ck-tab.active { background:linear-gradient(135deg,rgba(201,162,75,0.22),rgba(201,162,75,0.05)); color:var(--gold-bright); border-color:var(--gold); box-shadow:0 0 18px rgba(201,162,75,0.18); }
+    .ck-tab-glyph { font-size:13px; }
+
+    /* LAYOUT */
+    .ck-layout { display:grid; grid-template-columns:420px 1fr; gap:30px; align-items:start; }
+    @media (max-width:880px) { .ck-layout { grid-template-columns:1fr; } }
+
+    /* CHART */
+    .ck-chart-wrap { position:relative; width:100%; max-width:420px; margin:0 auto; display:flex; align-items:center; justify-content:center; }
+    .ck-mandala { position:absolute; border-radius:50%; border:1px dashed rgba(201,162,75,0.25); }
+    .ck-mandala-outer { width:108%; height:108%; animation:ck-spin 90s linear infinite; }
+    .ck-mandala-inner { width:96%; height:96%; border-style:solid; border-color:rgba(201,162,75,0.12); animation:ck-spin-rev 70s linear infinite; }
+    @keyframes ck-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+    @keyframes ck-spin-rev { from { transform:rotate(360deg); } to { transform:rotate(0deg); } }
+    .ck-svg { width:100%; height:auto; position:relative; z-index:2; filter:drop-shadow(0 0 24px rgba(90,60,150,0.35)); }
+    .ck-house-num { fill:rgba(201,162,75,0.65); font-size:10px; font-family:'Inter',sans-serif; }
+    .ck-house-sign { fill:rgba(169,155,203,0.55); font-size:7px; font-family:'Inter',sans-serif; letter-spacing:0.02em; }
+    .ck-planet { fill:var(--parchment); font-size:12px; font-family:'Cinzel',serif; font-weight:600; }
+    .ck-planet-asc { fill:var(--gold-bright); }
+    .ck-planet-deg { fill:var(--muted); font-size:7.5px; font-family:'Inter',sans-serif; }
+    .ck-chart-legend { margin-top:18px; display:flex; flex-wrap:wrap; gap:8px 14px; justify-content:center; font-size:10.5px; color:var(--muted); }
+    .ck-chart-legend b { color:var(--gold-bright); }
+
+    /* CONTENT */
+    .ck-content { min-width:0; }
+    .ck-hero-line { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:22px; color:var(--gold-bright); margin-bottom:18px; line-height:1.35; }
+    .ck-card { background:linear-gradient(180deg,rgba(255,255,255,0.025),rgba(255,255,255,0.01)); border:1px solid rgba(201,162,75,0.18); border-radius:12px; padding:18px 20px; margin-bottom:16px; }
+    .ck-card-rose { border-color:rgba(194,107,122,0.3); }
+    .ck-card-sage { border-color:rgba(143,185,154,0.3); }
+    .ck-eyebrow { font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+    .ck-card-title { font-family:'Cormorant Garamond',serif; font-size:21px; color:var(--parchment); margin:0 0 10px; font-weight:600; }
+    .ck-card-body { font-size:14px; line-height:1.65; color:#d8cfe8; }
+    .ck-card-body p { margin:0 0 10px; }
+    .ck-card-body p:last-child { margin-bottom:0; }
+    .ck-card-body ul { margin:6px 0 0; padding-left:18px; }
+    .ck-card-body li { margin-bottom:6px; }
+
+    .ck-ts-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; margin-bottom:16px; }
+    @media (max-width:560px) { .ck-ts-grid { grid-template-columns:1fr; } }
+    .ck-ts { border-radius:10px; padding:13px 15px; font-size:13px; line-height:1.55; }
+    .ck-ts-hard { background:rgba(194,107,122,0.08); border:1px solid rgba(194,107,122,0.3); }
+    .ck-ts-great { background:rgba(143,185,154,0.08); border:1px solid rgba(143,185,154,0.3); }
+    .ck-ts-label { font-family:'Cinzel',serif; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:6px; }
+    .ck-ts-hard .ck-ts-label { color:var(--rose); }
+    .ck-ts-great .ck-ts-label { color:var(--sage); }
+    .ck-ts p { margin:0; color:#d8cfe8; }
+
+    .ck-remedy { border-left:2px solid var(--gold); padding-left:14px; margin-top:14px; }
+    .ck-remedy-title { font-family:'Cinzel',serif; font-size:11px; letter-spacing:0.1em; color:var(--gold-bright); margin-bottom:6px; }
+    .ck-remedy ul { margin:0; padding-left:16px; font-size:13px; color:#d8cfe8; line-height:1.6; }
+
+    .ck-stat-row { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+    .ck-stat { flex:1 1 140px; background:rgba(201,162,75,0.05); border:1px solid rgba(201,162,75,0.2); border-radius:10px; padding:12px 14px; }
+    .ck-stat-label { font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); font-family:'Cinzel',serif; }
+    .ck-stat-value { font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--gold-bright); margin-top:4px; }
+
+    .ck-timeline { position:relative; margin:10px 0 4px; padding-left:20px; }
+    .ck-timeline::before { content:''; position:absolute; left:5px; top:4px; bottom:4px; width:1px; background:linear-gradient(180deg,var(--gold),transparent); }
+    .ck-tl-item { position:relative; margin-bottom:14px; }
+    .ck-tl-item::before { content:''; position:absolute; left:-20px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px var(--gold); }
+    .ck-tl-period { font-family:'Cinzel',serif; font-size:11.5px; color:var(--gold-bright); }
+    .ck-tl-desc { font-size:13px; color:#d8cfe8; margin-top:2px; line-height:1.55; }
+    .ck-tl-current { color:var(--sage); font-size:10px; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px; }
+
+    .ck-footer-note { text-align:center; font-size:11.5px; color:var(--muted); font-style:italic; margin-top:30px; max-width:620px; margin-left:auto; margin-right:auto; line-height:1.6; }
+
+    /* LOADING */
+    #loading { position:fixed; inset:0; background:rgba(10,8,24,0.93); z-index:100; display:none; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+    #loading.show { display:flex; }
+    .spinner { width:48px; height:48px; border:2px solid rgba(201,162,75,0.2); border-top-color:var(--gold); border-radius:50%; animation:ck-spin 1s linear infinite; }
+    .loading-txt { font-family:'Cinzel',serif; font-size:12px; letter-spacing:0.2em; color:var(--gold); text-transform:uppercase; }
+
+    @media (max-width:560px) { .form-grid { grid-template-columns:1fr; } .form-wrap { padding:32px 20px 36px; } }
+    @media print { #starfield,.ck-back,.ck-tabs { display:none; } #screen-form { display:none; } #screen-result { display:block!important; } body { background:white; color:black; } }
+  </style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div id="loading"><div class="spinner"></div><div class="loading-txt">Reading the cosmos…</div></div>
+
+<!-- SCREEN 1: FORM -->
+<section class="screen" id="screen-form">
+  <div class="form-wrap">
+    <div class="form-kicker">The Architect of Cosmic Destiny</div>
+    <h1 class="form-title">Your Cosmic Kundali</h1>
+    <p class="form-sub">Enter your birth details to receive a personalized Vedic birth chart — no data stored, no API, works fully offline.</p>
+    <form id="kundali-form" novalidate>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="f-name">Full Name</label>
+          <input type="text" id="f-name" placeholder="e.g. Arjun Sharma" autocomplete="name" required />
+        </div>
+        <div class="form-group">
+          <label for="f-gender">Gender</label>
+          <select id="f-gender"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <select id="f-dob-day" style="flex:1;" title="Day">
+              <option value="1">01</option><option value="2">02</option><option value="3">03</option>
+              <option value="4">04</option><option value="5">05</option><option value="6">06</option>
+              <option value="7">07</option><option value="8">08</option><option value="9">09</option>
+              <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+              <option value="13">13</option><option value="14">14</option><option value="15" selected>15</option>
+              <option value="16">16</option><option value="17">17</option><option value="18">18</option>
+              <option value="19">19</option><option value="20">20</option><option value="21">21</option>
+              <option value="22">22</option><option value="23">23</option><option value="24">24</option>
+              <option value="25">25</option><option value="26">26</option><option value="27">27</option>
+              <option value="28">28</option><option value="29">29</option><option value="30">30</option>
+              <option value="31">31</option>
+            </select>
+            <select id="f-dob-month" style="flex:1.4;" title="Month">
+              <option value="1" selected>Jan</option><option value="2">Feb</option><option value="3">Mar</option>
+              <option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option>
+              <option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option>
+              <option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option>
+            </select>
+            <select id="f-dob-year" style="flex:1.4;" title="Year"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Time of Birth</label>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <select id="f-tob-hr" style="flex:1;" title="Hour">
+              <option value="1">01</option><option value="2">02</option><option value="3">03</option>
+              <option value="4">04</option><option value="5">05</option><option value="6">06</option>
+              <option value="7">07</option><option value="8">08</option><option value="9">09</option>
+              <option value="10">10</option><option value="11" selected>11</option><option value="12">12</option>
+            </select>
+            <span style="color:var(--gold); font-weight:bold;">:</span>
+            <select id="f-tob-min" style="flex:1;" title="Minute">
+              <option value="0">00</option><option value="5">05</option><option value="10">10</option>
+              <option value="15" selected>15</option><option value="20">20</option><option value="25">25</option>
+              <option value="30">30</option><option value="35">35</option><option value="40">40</option>
+              <option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+            <select id="f-tob-ampm" style="flex:1.2;" title="AM/PM">
+              <option value="AM" selected>AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="f-place">City of Birth</label>
+          <input type="text" id="f-place" placeholder="e.g. Kolkata, India" list="cities-list" required />
+          <datalist id="cities-list"></datalist>
+        </div>
+        <div class="form-group">
+          <label for="f-lat">Latitude (optional)</label>
+          <input type="number" id="f-lat" placeholder="e.g. 22.5726" step="0.0001" min="-90" max="90" />
+        </div>
+      </div>
+      <button type="submit" class="generate-btn">✦ Cast My Kundali ✦</button>
+    </form>
+  </div>
+</section>
+
+<!-- SCREEN 2: RESULT -->
+<section class="screen" id="screen-result">
+  <button class="ck-back" id="btn-back">&#8592; Cast Another</button>
+  <header class="ck-header">
+    <div class="ck-kicker">The Architect of Cosmic Destiny</div>
+    <h1 class="ck-title" id="r-name">Your Kundali, Decoded</h1>
+    <p class="ck-subtitle" id="r-bio"></p>
+    <div class="ck-signbadges" id="r-badges"></div>
+    <div class="ck-facts" id="r-facts"></div>
+  </header>
+  <nav class="ck-tabs" id="tab-nav">
+    <button class="ck-tab active" data-tab="overview"><span class="ck-tab-glyph">&#9789;</span> Overview</button>
+    <button class="ck-tab" data-tab="career"><span class="ck-tab-glyph">&#9796;</span> Career &amp; Karma</button>
+    <button class="ck-tab" data-tab="love"><span class="ck-tab-glyph">&#9792;</span> Love &amp; Union</button>
+    <button class="ck-tab" data-tab="health"><span class="ck-tab-glyph">&#9737;</span> Health &amp; Vitality</button>
+    <button class="ck-tab" data-tab="wealth"><span class="ck-tab-glyph">&#9795;</span> Wealth / Artha</button>
+  </nav>
+  <div class="ck-layout">
+    <div>
+      <div class="ck-chart-wrap">
+        <div class="ck-mandala ck-mandala-outer"></div>
+        <div class="ck-mandala ck-mandala-inner"></div>
+        <svg id="kundali-svg" viewBox="0 0 400 400" class="ck-svg">
+          <defs>
+            <linearGradient id="ckGold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#f4d998"/>
+              <stop offset="100%" stop-color="#b8862f"/>
+            </linearGradient>
+            <filter id="ckGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2.2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+        </svg>
+      </div>
+      <div class="ck-chart-legend">
+        <span><b>As</b> Ascendant</span><span><b>Su</b> Sun</span><span><b>Mo</b> Moon</span>
+        <span><b>Ma</b> Mars</span><span><b>Me</b> Mercury</span><span><b>Ve</b> Venus</span>
+        <span><b>Ju</b> Jupiter</span><span><b>Sa</b> Saturn</span><span><b>Ra</b> Rahu</span><span><b>Ke</b> Ketu</span>
+      </div>
+    </div>
+    <div class="ck-content" id="tab-content"></div>
+  </div>
+  <p class="ck-footer-note">Jyotish is a centuries-old symbolic language — a mirror for reflection, not a fixed verdict. Read these pillars as invitations to notice patterns in yourself, and pair them with your own judgment and, where it matters, a qualified professional.</p>
+</section>
+
+<script>
+/* COSMIC KUNDALI — Pure Vanilla JS Astrology Engine */
+
+/* STARFIELD */
+(function(){
+  var sf=document.getElementById('starfield');
+  for(var i=0;i<110;i++){
+    var s=document.createElement('div'); s.className='star';
+    var sz=(Math.random()*2+0.5).toFixed(1);
+    s.style.cssText='width:'+sz+'px;height:'+sz+'px;top:'+(Math.random()*100).toFixed(1)+'%;left:'+(Math.random()*100).toFixed(1)+'%;--delay:'+(Math.random()*7).toFixed(1)+'s;--dur:'+(Math.random()*4+3).toFixed(1)+'s;opacity:'+(Math.random()*0.6+0.2).toFixed(2);
+    sf.appendChild(s);
+  }
+})();
+
+/* CITIES */
+var CITIES={
+  'kolkata':{lat:22.5726,lng:88.3639},'mumbai':{lat:19.076,lng:72.8777},
+  'delhi':{lat:28.7041,lng:77.1025},'new delhi':{lat:28.6139,lng:77.209},
+  'bangalore':{lat:12.9716,lng:77.5946},'bengaluru':{lat:12.9716,lng:77.5946},
+  'chennai':{lat:13.0827,lng:80.2707},'hyderabad':{lat:17.385,lng:78.4867},
+  'pune':{lat:18.5204,lng:73.8567},'ahmedabad':{lat:23.0225,lng:72.5714},
+  'jaipur':{lat:26.9124,lng:75.7873},'lucknow':{lat:26.8467,lng:80.9462},
+  'varanasi':{lat:25.3176,lng:82.9739},'patna':{lat:25.5941,lng:85.1376},
+  'bhopal':{lat:23.2599,lng:77.4126},'nagpur':{lat:21.1458,lng:79.0882},
+  'surat':{lat:21.1702,lng:72.8311},'indore':{lat:22.7196,lng:75.8577},
+  'london':{lat:51.5074,lng:-0.1278},'new york':{lat:40.7128,lng:-74.006},
+  'los angeles':{lat:34.0522,lng:-118.2437},'sydney':{lat:-33.8688,lng:151.2093},
+  'dubai':{lat:25.2048,lng:55.2708},'singapore':{lat:1.3521,lng:103.8198},
+  'paris':{lat:48.8566,lng:2.3522},'toronto':{lat:43.6532,lng:-79.3832},
+  'chicago':{lat:41.8781,lng:-87.6298},'houston':{lat:29.7604,lng:-95.3698},
+  'berlin':{lat:52.52,lng:13.405},'tokyo':{lat:35.6762,lng:139.6503},
+};
+function lookupCity(name){
+  var key=name.toLowerCase().replace(/,.*$/,'').trim();
+  for(var k in CITIES){if(key.indexOf(k)>=0||k.indexOf(key)>=0)return CITIES[k];}
+  return {lat:23.0,lng:81.0};
+}
+
+/* ASTROLOGY DATA */
+var ZODIAC=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+var ZODIAC_SYM=['&#9800;','&#9801;','&#9802;','&#9803;','&#9804;','&#9805;','&#9806;','&#9807;','&#9808;','&#9809;','&#9810;','&#9811;'];
+var RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+var NAKSHATRA=['Ashwini','Bharani','Krittika','Rohini','Mrigashira','Ardra','Punarvasu','Pushya','Ashlesha','Magha','Purva Phalguni','Uttara Phalguni','Hasta','Chitra','Swati','Vishakha','Anuradha','Jyeshtha','Mula','Purva Ashadha','Uttara Ashadha','Shravana','Dhanistha','Shatabhisha','Purva Bhadrapada','Uttara Bhadrapada','Revati'];
+var NAK_LORDS=['Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me','Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me','Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me'];
+var DASHA_YRS={Ke:7,Ve:20,Su:6,Mo:10,Ma:7,Ra:18,Ju:16,Sa:19,Me:17};
+var DASHA_ORDER=['Ke','Ve','Su','Mo','Ma','Ra','Ju','Sa','Me'];
+
+/* MATH */
+function norm(v){return((v%360)+360)%360;}
+function sind(d){return Math.sin(d*Math.PI/180);}
+function cosd(d){return Math.cos(d*Math.PI/180);}
+function tand(d){return Math.tan(d*Math.PI/180);}
+
+/* JULIAN DATE */
+function toJD(y,mo,d,h){
+  if(mo<=2){y--;mo+=12;}
+  var A=Math.floor(y/100),B=2-A+Math.floor(A/4);
+  return Math.floor(365.25*(y+4716))+Math.floor(30.6001*(mo+1))+d+h/24+B-1524.5;
+}
+
+/* PLANET LONGITUDES (tropical, mean elements) */
+function planetLon(jd){
+  var T=(jd-2451545)/36525;
+  /* Sun */
+  var L0=280.46646+36000.76983*T;
+  var M=(357.52911+35999.05029*T-0.0001537*T*T)*Math.PI/180;
+  var C=(1.914602-0.004817*T-0.000014*T*T)*Math.sin(M)+(0.019993-0.000101*T)*Math.sin(2*M)+0.000289*Math.sin(3*M);
+  var sunL=norm(L0+C);
+  /* Moon (Brown's theory simplified) */
+  var Lm=norm(218.3165+481267.8813*T);
+  var Dm=norm(297.8502+445267.1115*T);
+  var Mm=norm(357.5291+35999.0503*T);
+  var Mm2=norm(134.9634+477198.8676*T);
+  var F=norm(93.2721+483202.0175*T);
+  var moonL=norm(Lm+6.2886*sind(Mm2)+1.274*sind(2*Dm-Mm2)+0.6583*sind(2*Dm)+0.2136*sind(2*Mm2)-0.1851*sind(Mm)-0.1143*sind(2*F)+0.0588*sind(2*Dm-2*Mm2)+0.0572*sind(2*Dm-Mm-Mm2)+0.0533*sind(2*Dm+Mm2));
+  /* Other planets (mean longitude) */
+  var marsL=norm(355.4633+19140.2993*T);
+  var mercL=norm(252.2509+149474.0722*T);
+  var venL=norm(181.9798+58517.8157*T);
+  var jupL=norm(34.3515+3034.9057*T);
+  var satL=norm(50.0774+1222.1138*T);
+  var rahuL=norm(125.0445-1934.1363*T+0.002*T*T);
+  return{Su:sunL,Mo:moonL,Ma:marsL,Me:mercL,Ve:venL,Ju:jupL,Sa:satL,Ra:rahuL,Ke:norm(rahuL+180)};
+}
+
+/* LAHIRI AYANAMSA */
+function ayanamsa(jd){var T=(jd-2451545)/36525;return 23.85+0.01360*T;}
+
+/* ASCENDANT */
+function calcAsc(jd,lat,lng){
+  var T=(jd-2451545)/36525;
+  var GMST=norm(280.46061837+360.98564736629*(jd-2451545)+T*T*0.000387933);
+  var LMST=norm(GMST+lng);
+  var eps=(23.439291111-0.013004167*T);
+  var LMST_r=LMST*Math.PI/180;
+  var eps_r=eps*Math.PI/180;
+  var lat_r=lat*Math.PI/180;
+  var y=cosd(LMST);
+  var x=-(Math.sin(eps_r)*Math.tan(lat_r)+Math.cos(eps_r)*sind(LMST));
+  return norm(Math.atan2(y,x)*180/Math.PI);
+}
+
+function signOf(lon){return Math.floor(lon/30);}
+function degInSign(lon){return Math.floor(lon%30);}
+function nakOf(lon){return Math.floor(lon/(360/27));}
+
+/* DASHA */
+function calcDasha(moonLon,dob){
+  var nakIdx=nakOf(moonLon);
+  var lord=NAK_LORDS[nakIdx];
+  var frac=(moonLon%(360/27))/(360/27);
+  var lordIdx=DASHA_ORDER.indexOf(lord);
+  var dashas=[];
+  var dt=new Date(dob.getTime());
+  for(var i=0;i<9;i++){
+    var idx=(lordIdx+i)%9;
+    var p=DASHA_ORDER[idx];
+    var yrs=(i===0)?DASHA_YRS[p]*(1-frac):DASHA_YRS[p];
+    var start=new Date(dt.getTime());
+    var end=new Date(dt.getTime());
+    end.setDate(end.getDate()+Math.round(yrs*365.25));
+    dashas.push({planet:p,start:start,end:end,years:yrs});
+    dt=new Date(end.getTime());
+  }
+  return dashas;
+}
+
+/* HOUSES (whole-sign from Lagna) */
+function buildHouses(ascLon,planets){
+  var lagnaSign=signOf(ascLon);
+  var hSigns={};
+  for(var h=1;h<=12;h++) hSigns[h]=ZODIAC[(lagnaSign+h-1)%12];
+  var signToHouse={};
+  for(var h=1;h<=12;h++) signToHouse[(lagnaSign+h-1)%12]=h;
+  var pHouse={As:1};
+  for(var p in planets) pHouse[p]=signToHouse[signOf(planets[p])];
+  return{hSigns:hSigns,pHouse:pHouse};
+}
+
+/* SVG CHART */
+var HPOLY={
+  1:'200,0 300,100 200,200 100,100',2:'0,0 200,0 100,100',3:'0,0 100,100 0,200',
+  4:'0,200 100,100 200,200 100,300',5:'0,200 100,300 0,400',6:'0,400 100,300 200,400',
+  7:'200,400 100,300 200,200 300,300',8:'200,400 300,300 400,400',9:'400,400 300,300 400,200',
+  10:'400,200 300,300 200,200 300,100',11:'400,200 300,100 400,0',12:'400,0 300,100 200,0',
+};
+var HLABEL={1:[200,30],2:[95,22],3:[22,95],4:[100,205],5:[22,305],6:[100,378],7:[200,370],8:[305,378],9:[378,305],10:[300,205],11:[378,95],12:[305,22]};
+var HCONTENT={1:[200,90],2:[100,40],3:[40,100],4:[100,200],5:[40,300],6:[100,355],7:[200,300],8:[300,355],9:[355,300],10:[300,200],11:[355,100],12:[300,40]};
+var PORDER=['As','Su','Mo','Ma','Me','Ve','Ju','Sa','Ra','Ke'];
+
+function renderChart(hSigns,pHouse,planetsLon){
+  var svg=document.getElementById('kundali-svg');
+  var NS='http://www.w3.org/2000/svg';
+  /* remove all except defs */
+  var kids=Array.from(svg.childNodes);
+  kids.forEach(function(k){if(k.tagName!=='defs')svg.removeChild(k);});
+
+  function el(tag,attrs,txt){
+    var e=document.createElementNS(NS,tag);
+    for(var k in attrs)e.setAttribute(k,attrs[k]);
+    if(txt!==undefined)e.textContent=txt;
+    return e;
+  }
+
+  svg.appendChild(el('rect',{x:1,y:1,width:398,height:398,fill:'#150f2b',stroke:'url(#ckGold)','stroke-width':2}));
+
+  /* houses -> planets */
+  var hPlanets={};
+  PORDER.forEach(function(p){
+    var h=pHouse[p];
+    if(h){if(!hPlanets[h])hPlanets[h]=[];hPlanets[h].push(p);}
+  });
+
+  for(var h=1;h<=12;h++){
+    svg.appendChild(el('polygon',{points:HPOLY[h],fill:hPlanets[h]?'rgba(201,162,75,0.07)':'transparent',stroke:'rgba(201,162,75,0.55)','stroke-width':1}));
+  }
+
+  for(var h=1;h<=12;h++){
+    var pos=HLABEL[h]; var lx=pos[0],ly=pos[1];
+    var dy=(h===1||h===7)?14:(h===4||h===10)?0:12;
+    svg.appendChild(el('text',{x:lx,y:ly,'text-anchor':'middle',class:'ck-house-num'},String(h)));
+    svg.appendChild(el('text',{x:lx,y:ly+dy,'text-anchor':'middle',class:'ck-house-sign'},hSigns[h]));
+  }
+
+  for(var h=1;h<=12;h++){
+    if(!hPlanets[h])continue;
+    var ps=hPlanets[h]; var cp=HCONTENT[h]; var cx=cp[0],cy=cp[1];
+    var perRow=ps.length>3?3:ps.length;
+    ps.forEach(function(p,i){
+      var row=Math.floor(i/perRow),col=i%perRow;
+      var rowCount=Math.ceil(ps.length/perRow);
+      var px=cx+(col-(perRow-1)/2)*34;
+      var py=cy+(row-(rowCount-1)/2)*22;
+      var isAsc=(p==='As');
+      var g=el('g',isAsc?{filter:'url(#ckGlow)'}:{});
+      var lon=planetsLon[p]!==undefined?planetsLon[p]:0;
+      var deg=Math.floor(lon%30)+'°';
+      g.appendChild(el('text',{x:px,y:py,'text-anchor':'middle',class:isAsc?'ck-planet ck-planet-asc':'ck-planet'},p));
+      g.appendChild(el('text',{x:px,y:py+11,'text-anchor':'middle',class:'ck-planet-deg'},deg));
+      svg.appendChild(g);
+    });
+  }
+}
+
+/* HELPERS */
+var PNAME={As:'Ascendant',Su:'Sun',Mo:'Moon',Ma:'Mars',Me:'Mercury',Ve:'Venus',Ju:'Jupiter',Sa:'Saturn',Ra:'Rahu',Ke:'Ketu'};
+var HTHEME=['Self & Personality','Wealth & Family','Courage & Communication','Home & Mother','Creativity & Children','Health & Service','Partnership & Marriage','Transformation','Dharma & Fortune','Career & Status','Gains & Network','Liberation'];
+
+function ord(n){return['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'][(n||1)-1];}
+function fmtDate(d){if(!d)return '?';return d.toLocaleDateString('en-IN',{year:'numeric',month:'short'});}
+function abbr(name){var m={Sun:'Su',Moon:'Mo',Mars:'Ma',Mercury:'Me',Venus:'Ve',Jupiter:'Ju',Saturn:'Sa',Rahu:'Ra',Ketu:'Ke'};return m[name]||name.substring(0,2);}
+function currentDasha(dashas){var now=new Date();return dashas.find(function(d){return d.start<=now&&d.end>now;});}
+function nextDasha(dashas){var now=new Date();var idx=dashas.findIndex(function(d){return d.start<=now&&d.end>now;});return(idx>=0&&idx<dashas.length-1)?dashas[idx+1]:null;}
+function calcAge(dob){var now=new Date();var age=now.getFullYear()-dob.getFullYear();var m=now.getMonth()-dob.getMonth();if(m<0||(m===0&&now.getDate()<dob.getDate()))age--;return age;}
+function dayName(d){return['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];}
+
+/* NAKSHATRA DESCRIPTIONS */
+var NAK_DESC={
+  'Ashwini':'a spirit of swift healing and pioneering instinct',
+  'Bharani':'the weight of restraint — you carry what others cannot',
+  'Krittika':'fire of purification and decisive clarity',
+  'Rohini':'a magnetic pull toward beauty, growth, and sensory richness',
+  'Mrigashira':'an eternal seeker — curious, restless, searching',
+  'Ardra':'the storm before clarity — emotional intensity that becomes wisdom',
+  'Punarvasu':'a return to light after difficulty — resilience is your core',
+  'Pushya':'a nurturing force that sustains others while feeding on purpose',
+  'Ashlesha':'a coiled awareness — penetrating, hypnotic, transmutative',
+  'Magha':'the throne of the ancestors — dignity, authority, and roots',
+  'Purva Phalguni':'pleasure and creative expression as a spiritual path',
+  'Uttara Phalguni':'the marriage of service and self — you shine through giving',
+  'Hasta':'precise craftsmanship and healing through the hands',
+  'Chitra':'a jewel of artistry — you create beauty as a cosmic act',
+  'Swati':'independence and freedom — you resist containment',
+  'Vishakha':'focused ambition toward a singular burning goal',
+  'Anuradha':'loyalty and devotion — you build lasting bonds across time',
+  'Jyeshtha':'the elder\'s authority — leadership as burden and gift',
+  'Mula':'the root of things — driven to uncover what is hidden',
+  'Purva Ashadha':'invincibility of spirit — you do not yield easily',
+  'Uttara Ashadha':'final victory through patience and sustained effort',
+  'Shravana':'the gift of listening — you hear what others miss',
+  'Dhanistha':'abundance through action — you are made to achieve',
+  'Shatabhisha':'the healer of hidden wounds, a mysterious solitude',
+  'Purva Bhadrapada':'a fire that purifies — intensity seeking transformation',
+  'Uttara Bhadrapada':'depths of compassion and cosmic understanding',
+  'Revati':'nurturing, mystical, and eternally kind',
+};
+
+/* SIGN QUALITIES */
+var SIGN_DESC={
+  'Aries':'a pioneer and natural leader, quick-thinking and bold',
+  'Taurus':'sensual, patient and deeply persistent — you build to last',
+  'Gemini':'intellectually agile and socially gifted, you thrive on variety',
+  'Cancer':'emotionally intelligent and nurturing, with deep intuitive roots',
+  'Leo':'radiant and self-expressive, you carry a natural charisma',
+  'Virgo':'analytical, service-oriented and driven by a deep love of craft',
+  'Libra':'a natural diplomat who seeks beauty, harmony and balance',
+  'Scorpio':'penetrating and transformative, you deal in depth not surface',
+  'Sagittarius':'philosophical and freedom-seeking, you follow meaning over routine',
+  'Capricorn':'ambitious and disciplined, you build patiently for the long view',
+  'Aquarius':'original and forward-thinking, you belong to the future',
+  'Pisces':'empathic and intuitive, you carry the ocean within you',
+};
+
+var CAREER_Q={
+  'Aries':'pioneering ventures, leadership, and competitive fields',
+  'Taurus':'finance, luxury, arts, or any field requiring patient accumulation',
+  'Gemini':'writing, communication, trade, technology, or roles requiring versatile thinking',
+  'Cancer':'caregiving, real estate, hospitality, food, or fields with emotional resonance',
+  'Leo':'leadership, entertainment, education, or any platform requiring presence',
+  'Virgo':'analysis, medicine, research, editing, or any precision-craft that serves others',
+  'Libra':'law, diplomacy, design, or any domain requiring balance and people skills',
+  'Scorpio':'investigation, psychology, finance, or transformation-focused fields',
+  'Sagittarius':'education, law, travel, or any field rooted in higher meaning',
+  'Capricorn':'government, corporate, engineering, or structure-building that rewards longevity',
+  'Aquarius':'technology, social causes, innovation, or fields that serve the collective',
+  'Pisces':'arts, healing, spirituality, film, or domains where imagination is the raw material',
+};
+
+var LOVE_Q={
+  'Aries':'directness, passion, independence, and spontaneity',
+  'Taurus':'sensuality, stability, loyalty, and a love of beauty',
+  'Gemini':'wit, curiosity, adaptability, and intellectual stimulation',
+  'Cancer':'emotional depth, nurturing warmth, and protective loyalty',
+  'Leo':'warmth, generosity, confidence, and a flair for drama',
+  'Virgo':'attentiveness, reliability, and practical devotion',
+  'Libra':'elegance, fairness, romantic thoughtfulness, and social grace',
+  'Scorpio':'intensity, depth, transformative power, and unswerving loyalty',
+  'Sagittarius':'freedom, philosophical depth, adventure, and honest directness',
+  'Capricorn':'ambition, reliability, and long-view commitment',
+  'Aquarius':'originality, friendship-as-love, and progressive thinking',
+  'Pisces':'empathy, imagination, spiritual connection, and boundless compassion',
+};
+
+var BODY_FOCUS={
+  'Aries':'Head & Brain','Taurus':'Throat & Thyroid','Gemini':'Lungs & Nerves',
+  'Cancer':'Chest & Stomach','Leo':'Heart & Spine','Virgo':'Intestines & Digestion',
+  'Libra':'Kidneys & Lower Back','Scorpio':'Reproductive System','Sagittarius':'Hips & Thighs',
+  'Capricorn':'Knees & Bones','Aquarius':'Circulation & Ankles','Pisces':'Feet & Lymphatics',
+};
+
+var VENUS_NOTE={
+  1:'Venus here makes your personality magnetic — love and beauty are central to your identity.',
+  2:'Love and wealth are intertwined — you attract through your voice, your values, and what you have built.',
+  3:'Love expressed through communication and shared effort. Partners who share your intellectual world resonate deeply.',
+  4:'Deep, domestic, soulful love — home is where your heart truly opens.',
+  5:'Romantic and creative love — affairs of the heart are vivid and artistically coloured.',
+  6:'Love expressed through service and devotion — you show up for people in practical ways.',
+  7:'Venus in the house of partnership is a classic placement for deep romantic relationships and significant marriage.',
+  8:'Intensity and transformation define your love experiences — nothing is surface-level.',
+  9:'Love that teaches and expands — partners tend to be wise, inspiring, or philosophically rich.',
+  10:'Public life and career are entangled with love — partners often share your professional world.',
+  11:'Love through friendship and shared ideals — your best partnerships begin as deep friendships.',
+  12:'Private, spiritual love — the most meaningful connections begin in hidden or unusual ways.',
+};
+
+var DASHA_CAREER={
+  Su:'A time for authority and visibility. Pitch yourself boldly — the Sun rewards those who step into the light.',
+  Mo:'Intuition leads the way. Career moves guided by gut feeling tend to land well in this period.',
+  Ma:'High energy and drive activate the career. Bold action and assertion are rewarded.',
+  Me:'Mercury brings skill-building and communication to the fore. A strong period for learning and pitching.',
+  Ve:'Venus-ruled periods favour creative fields, relationships, and anything where aesthetics matter.',
+  Ju:'Expansion and wisdom — one of the strongest windows for growth, title change, or higher responsibility.',
+  Sa:'Patience and discipline are the currency. Slow, methodical work compounds into something lasting.',
+  Ra:'Obsessive drive and unconventional ambition. Technology and disruptive moves are highlighted.',
+  Ke:'A period of inner work. Career gains may feel indirect, but spiritual clarity sharpens direction.',
+};
+
+var PLANET_UPAYA={
+  Su:'honour Sundays with acts of service; offer water to the rising sun',
+  Mo:'Mondays, offer white flowers or milk at a Shiva or Devi shrine',
+  Ma:'Tuesdays, a physical discipline or act of courage; donate red lentils',
+  Me:'Wednesdays, green moong dal to charity; recite Om Budhaya Namaha 108 times',
+  Ve:'Fridays, beauty and artistic acts; offer white or pink flowers to Lakshmi',
+  Ju:'Thursdays, generosity and study; offer yellow foods or a donation to a teacher',
+  Sa:'Saturdays, fasting or simplicity; offer sesame seeds',
+  Ra:'Feed the poor on Saturdays; avoid impulsive decisions',
+  Ke:'Tuesday acts of spiritual humility; recite Ganesh mantras',
+};
+
+var WEALTH_H11={
+  'Aries':'Gains come quickly but require initiative — the first mover advantage is yours if you act',
+  'Taurus':'Gains accrue slowly and solidly — you build wealth as you build everything else: patiently',
+  'Gemini':'Multiple income streams and intellectual ventures are natural channels for gain',
+  'Cancer':'Gains often tied to family, real estate, or nurturing ventures',
+  'Leo':'Public recognition and leadership roles open financial doors',
+  'Virgo':'Service, precision, and health-related fields are natural gain channels',
+  'Libra':'Partnership and negotiation are where your gains are made',
+  'Scorpio':'Investment and transformation-focused ventures are the natural channels',
+  'Sagittarius':'Teaching, travel, and higher knowledge open the doors to abundance',
+  'Capricorn':'Career achievement and structural expertise are the primary gain channels',
+  'Aquarius':'Technology, innovation, and collective causes are where gains flow',
+  'Pisces':'Creative, spiritual, and imaginative ventures carry the greatest potential',
+};
+
+/* TAB GENERATORS */
+function genOverview(d){
+  var h3ps=PORDER.filter(function(p){return d.pHouse[p]===3&&p!=='As';});
+  var lagnaNakIdx=nakOf(d.planetsLon['As']||0);
+  var lagnaNak=NAKSHATRA[lagnaNakIdx]||'';
+  var moonNak=d.moonNak;
+  var lagnaSign=d.lagnaSign;
+  var moonSign=d.moonSign;
+  var lagnaRuler=d.lagnaRuler;
+
+  var stelliumHtml='';
+  if(h3ps.length>=3){
+    stelliumHtml='<div class="ck-card ck-card-sage"><div class="ck-eyebrow">The Signature — House 3</div><h3 class="ck-card-title">A Concentration of Life-Force in House 3</h3><div class="ck-card-body"><p><strong>'+h3ps.map(function(p){return PNAME[p]||p;}).join(', ')+'</strong> are clustered in your 3rd house — the house of <em>'+HTHEME[2]+'</em>. This is a powerful stellium: almost everything routes through your voice, your hands, and your nerve.</p><p>This concentration makes you formidable in any field requiring communication, courage, or skilled effort. The challenge lies in dispersal — so much energy in one zone can neglect others.</p></div></div>';
+  }
+
+  return '<div class="ck-hero-line">"'+lagnaSign+' rising, '+moonSign+' Moon — a chart written in intensity and purpose."</div>'+
+    '<div class="ck-card"><div class="ck-eyebrow">The Foundation — Lagna</div><h3 class="ck-card-title">'+lagnaSign+' Ascendant &middot; '+lagnaNak+' Nakshatra</h3><div class="ck-card-body"><p>Your rising sign is <strong>'+lagnaSign+'</strong>, ruled by <strong>'+lagnaRuler+'</strong>. This shapes how the world experiences you before you say a word — '+(SIGN_DESC[lagnaSign]||'a complex and layered soul')+'.</p><p>The Ascendant in '+lagnaNak+' nakshatra gives you a particular quality of presence — '+(NAK_DESC[lagnaNak]||'a unique celestial signature')+'. This is the lens through which you meet every new beginning.</p></div></div>'+
+    '<div class="ck-card ck-card-rose"><div class="ck-eyebrow">The Foundation — Moon</div><h3 class="ck-card-title">Moon in '+moonSign+' &middot; '+moonNak+' Nakshatra</h3><div class="ck-card-body"><p>Your Moon sits in <strong>'+moonSign+'</strong> — '+(moonSign===lagnaSign?'sharing the same sign as your Ascendant, creating a unified emotional and physical identity':'a placement that colours your instincts, memory, and emotional responses with the qualities of '+moonSign)+'.</p><p>In <strong>'+moonNak+'</strong> nakshatra, your inner world carries '+(NAK_DESC[moonNak]||'a unique celestial quality')+'. This is the lens through which you process all experience before it becomes thought.</p></div></div>'+
+    stelliumHtml;
+}
+
+function genCareer(d){
+  var h10=d.hSigns[10]; var h10Lord=RULERS[ZODIAC.indexOf(h10)];
+  var h10LordH=d.pHouse[abbr(h10Lord)]||1;
+  var cd=currentDasha(d.dashas); var nd=nextDasha(d.dashas);
+  return '<div class="ck-hero-line">"'+d.lagnaSign+' rising calls for craft over spectacle — reputation built year by patient year."</div>'+
+    '<div class="ck-stat-row"><div class="ck-stat"><div class="ck-stat-label">10th House</div><div class="ck-stat-value">'+h10+'</div></div><div class="ck-stat"><div class="ck-stat-label">10th Lord</div><div class="ck-stat-value">'+h10Lord+'</div></div><div class="ck-stat"><div class="ck-stat-label">'+h10Lord+' in</div><div class="ck-stat-value">House '+h10LordH+'</div></div></div>'+
+    '<div class="ck-card"><div class="ck-eyebrow">10th House &amp; '+h10Lord+'</div><h3 class="ck-card-title">Career Shaped by '+h10+' Energy</h3><div class="ck-card-body"><p>Your Midheaven is in <strong>'+h10+'</strong>, governed by <strong>'+h10Lord+'</strong>, which sits in your '+ord(h10LordH)+' house — the house of <em>'+HTHEME[h10LordH-1]+'</em>. Your path points toward '+(CAREER_Q[h10]||'fields rewarding sustained expertise')+'.</p><p>Career identity compounds through demonstrated competence rather than a single dramatic break — the slow-burn professional archetype is written here.</p></div></div>'+
+    '<div class="ck-card ck-card-rose"><div class="ck-eyebrow">Skill &amp; Effort</div><h3 class="ck-card-title">What Your 3rd House Reveals About Work</h3><div class="ck-card-body"><p>The 3rd house of skill and communication is '+d.hSigns[3]+' — any planets here become your primary career engine. Careers in communication, technology, writing, media, or manual expertise all resonate strongly with this placement.</p></div></div>'+
+    '<div class="ck-ts-grid"><div class="ck-ts ck-ts-hard"><div class="ck-ts-label">Hard Truth</div><p>Your ambition can run ahead of your self-belief. Imposter syndrome is a recurring theme — yet your chart shows more capability than your inner critic admits.</p></div><div class="ck-ts ck-ts-great"><div class="ck-ts-label">Great Strength</div><p>'+h10Lord+' governing your career from house '+h10LordH+' gives patient, compounding authority — the kind that builds a real moat over years, not months.</p></div></div>'+
+    '<div class="ck-card ck-card-sage"><div class="ck-eyebrow">The Time Stream</div><h3 class="ck-card-title">Career Timing</h3><div class="ck-card-body"><div class="ck-timeline">'+
+    (cd?'<div class="ck-tl-item"><div class="ck-tl-period">Now &rarr; '+fmtDate(cd.end)+' <span class="ck-tl-current">current</span></div><div class="ck-tl-desc">'+PNAME[cd.planet]+' Mahadasha — '+(DASHA_CAREER[cd.planet]||'follow this planetary energy')+'</div></div>':'')+
+    (nd?'<div class="ck-tl-item"><div class="ck-tl-period">'+fmtDate(nd.start)+' &rarr; '+fmtDate(nd.end)+'</div><div class="ck-tl-desc">'+PNAME[nd.planet]+' Mahadasha begins — '+(DASHA_CAREER[nd.planet]||'a new chapter unfolds')+'</div></div>':'')+
+    '</div></div></div>'+
+    '<div class="ck-remedy"><div class="ck-remedy-title">Career Upayas</div><ul><li>Honour your 10th lord <strong>'+h10Lord+'</strong>: '+(PLANET_UPAYA[abbr(h10Lord)]||'observe the planet\'s day with an aligned act')+'.</li><li>Build one immovable weekly review ritual — consistency compounds.</li><li>Before high-stakes pitches, ground your nervous system first — your blocker is usually nerve, not knowledge.</li></ul></div>';
+}
+
+function genLove(d){
+  var h7=d.hSigns[7]; var h7Lord=RULERS[ZODIAC.indexOf(h7)];
+  var h7LordH=d.pHouse[abbr(h7Lord)]||1;
+  var venH=d.pHouse['Ve']||1;
+  return '<div class="ck-hero-line">"Partnership for '+d.lagnaSign+' rising is never casual — it is a full-soul undertaking."</div>'+
+    '<div class="ck-stat-row"><div class="ck-stat"><div class="ck-stat-label">7th House</div><div class="ck-stat-value">'+h7+'</div></div><div class="ck-stat"><div class="ck-stat-label">7th Lord</div><div class="ck-stat-value">'+h7Lord+'</div></div><div class="ck-stat"><div class="ck-stat-label">Venus in</div><div class="ck-stat-value">House '+venH+'</div></div></div>'+
+    '<div class="ck-card"><div class="ck-eyebrow">7th House &amp; '+h7Lord+'</div><h3 class="ck-card-title">Partnership Through '+h7+' Energy</h3><div class="ck-card-body"><p>Your 7th house of marriage is <strong>'+h7+'</strong>, ruled by <strong>'+h7Lord+'</strong>. Your ideal partner carries '+h7+' qualities: '+(LOVE_Q[h7]||'a deep, soulful presence')+'.</p><p>'+h7Lord+' sits in your '+ord(h7LordH)+' house — the house of <em>'+HTHEME[h7LordH-1]+'</em>, meaning the energy of partnership is experienced through that life domain.</p></div></div>'+
+    '<div class="ck-card ck-card-rose"><div class="ck-eyebrow">Venus — The Karaka of Love</div><h3 class="ck-card-title">Venus in House '+venH+' — '+d.hSigns[venH]+'</h3><div class="ck-card-body"><p>'+(VENUS_NOTE[venH]||'Venus colours this domain with charm and a desire for beauty and harmony.')+'</p></div></div>'+
+    '<div class="ck-ts-grid"><div class="ck-ts ck-ts-hard"><div class="ck-ts-label">Hard Truth</div><p>Because your relationship energy runs through the '+h7+' filter, you may unconsciously seek a partner who completes a missing quality rather than one who complements your wholeness.</p></div><div class="ck-ts ck-ts-great"><div class="ck-ts-label">Great Strength</div><p>Your Moon\'s emotional intelligence — once matured — makes you the partner who actually shows up, remembers what matters, and attunes to unspoken needs. That is rare.</p></div></div>'+
+    '<div class="ck-remedy"><div class="ck-remedy-title">Relationship Upayas</div><ul><li>For '+h7Lord+' (ruler of your 7th): '+(PLANET_UPAYA[abbr(h7Lord)]||'observe the planet\'s day')+'.</li><li>Keep a private journal for feelings you\'re tempted to manage in a partner rather than name out loud.</li><li>Before difficult conversations: a short walk or movement discharges reactive energy before it reaches your words.</li></ul></div>';
+}
+
+function genHealth(d){
+  var h6=d.hSigns[6]; var h6Lord=RULERS[ZODIAC.indexOf(h6)];
+  var bf=BODY_FOCUS[d.lagnaSign]||'Whole System';
+  var STRESS_NOTE={
+    'Aries':'Heat, inflammation, and headaches tend to be the first signals.',
+    'Taurus':'The throat, jaw, and thyroid carry the weight of unexpressed emotion.',
+    'Gemini':'Anxiety, scattered thoughts, and respiratory sensitivity are primary stress channels.',
+    'Cancer':'The gut and chest are where emotional overwhelm lands first.',
+    'Leo':'The heart and spine carry the load — back tension and cardiovascular sensitivity.',
+    'Virgo':'Digestive upset and nervous-system overdrive are the classic stress signatures.',
+    'Libra':'Kidney function and lower back tension respond quickly to imbalance.',
+    'Scorpio':'Reproductive and eliminative systems carry suppressed intensity.',
+    'Sagittarius':'Hip and sciatic tension arise under prolonged mental stress.',
+    'Capricorn':'Joints, knees, and bone density are the long-term signals to watch.',
+    'Aquarius':'Circulatory irregularity and ankle tension are the body\'s first language.',
+    'Pisces':'Foot issues, immune sensitivity, and lymphatic sluggishness are the first signals.',
+  };
+  var STRENGTH_NOTE={
+    'Aries':'Physical movement is your fastest reset — burn the energy before it becomes inflammation.',
+    'Taurus':'Sensory pleasure — good food, warm baths, time in nature — is genuinely medicinal.',
+    'Gemini':'Mental variety and movement together are your best medicine.',
+    'Cancer':'Water is your ally — swimming, baths, being near water regulates your nervous system.',
+    'Leo':'Sunlight, warmth, and creative expression are your fastest recovery routes.',
+    'Virgo':'Digestive health is your foundation — when the gut is settled, everything else follows.',
+    'Libra':'Balance in all things: sleep, work, movement — extremes cost you more than other signs.',
+    'Scorpio':'Deep-tissue movement and breathwork are unusually effective for you.',
+    'Sagittarius':'Open air and wide landscapes reset your system faster than any indoor practice.',
+    'Capricorn':'Structured, consistent routines — especially around sleep and joints — build remarkable resilience.',
+    'Aquarius':'Consistent rhythms are your health superpower — erratic schedules are your enemy.',
+    'Pisces':'Music, meditation, and time alone near water are powerful regulators.',
+  };
+  var EX_NOTE={
+    'Aries':'High-intensity training works well — just pair it with adequate recovery to avoid inflammation.',
+    'Taurus':'Steady, pleasurable movement (yoga, walking, swimming) outperforms high-intensity training.',
+    'Gemini':'Variety keeps you consistent — cycling, dancing, or sport requiring coordination.',
+    'Cancer':'Swimming and water-based movement are unusually restorative — prioritize them.',
+    'Leo':'Activities combining movement and enjoyment (dance, team sports) sustain motivation.',
+    'Virgo':'Precise, form-focused movement (yoga, Pilates, martial arts) aligns with your constitution.',
+    'Libra':'Partner-based or social movement — dance, doubles tennis — keeps you motivated.',
+    'Scorpio':'Intensity-releasing practices: martial arts, swimming long distances, intensive yoga.',
+    'Sagittarius':'Outdoor movement — hiking, cycling — is far more effective than a gym.',
+    'Capricorn':'Weight-bearing exercise and walking protect your joints and bones long-term.',
+    'Aquarius':'Unconventional movement practices suit you — group fitness with a cause.',
+    'Pisces':'Gentle, flowing movement — tai chi, swimming, slow yoga — is more effective than high-impact.',
+  };
+  return '<div class="ck-hero-line">"Your body keeps the diary your mind refuses to write."</div>'+
+    '<div class="ck-stat-row"><div class="ck-stat"><div class="ck-stat-label">6th House</div><div class="ck-stat-value">'+h6+'</div></div><div class="ck-stat"><div class="ck-stat-label">6th Lord</div><div class="ck-stat-value">'+h6Lord+'</div></div><div class="ck-stat"><div class="ck-stat-label">Body Focus</div><div class="ck-stat-value">'+bf+'</div></div></div>'+
+    '<div class="ck-card"><div class="ck-eyebrow">Constitution — Lagna Body</div><h3 class="ck-card-title">'+d.lagnaSign+' Body Type &amp; Vitality</h3><div class="ck-card-body"><p><strong>'+d.lagnaSign+' rising</strong> governs '+bf+' — the physical zones that carry the most karmic sensitivity in this lifetime. Your 6th house of daily health is <strong>'+h6+'</strong>, ruled by <strong>'+h6Lord+'</strong>.</p></div></div>'+
+    '<div class="ck-card ck-card-rose"><div class="ck-eyebrow">Stress Pattern</div><h3 class="ck-card-title">Where Your Body Holds Tension</h3><div class="ck-card-body"><p>'+(STRESS_NOTE[d.lagnaSign]||'The body speaks through its most sensitive zone when the mind is overloaded.')+' Watch for patterns: your health issues often carry an emotional signature before they become purely physical.</p></div></div>'+
+    '<div class="ck-ts-grid"><div class="ck-ts ck-ts-hard"><div class="ck-ts-label">Hard Truth</div><p>Chronic stress shows up in your '+bf.toLowerCase()+' before it shows up anywhere else. Suppressed emotion has a specific address in your body.</p></div><div class="ck-ts ck-ts-great"><div class="ck-ts-label">Great Strength</div><p>'+(STRENGTH_NOTE[d.lagnaSign]||'')+' Repetitive, sensory rituals work as unusually powerful regulators for your nervous system.</p></div></div>'+
+    '<div class="ck-remedy"><div class="ck-remedy-title">Vitality Upayas</div><ul><li>Build one immovable daily ritual (same wake time, same short movement) — your Lagna heals through repetition, not novelty.</li><li>A 10-minute brain-dump journal before bed empties racing thoughts rather than carrying them into sleep.</li><li>'+(EX_NOTE[d.lagnaSign]||'Regular moderate movement outperforms extremes for your constitution.')+'</li></ul></div>';
+}
+
+function genWealth(d){
+  var h2=d.hSigns[2]; var h11=d.hSigns[11];
+  var h2ps=PORDER.filter(function(p){return d.pHouse[p]===2&&p!=='As';}).map(function(p){return PNAME[p]||p;});
+  var h11ps=PORDER.filter(function(p){return d.pHouse[p]===11&&p!=='As';}).map(function(p){return PNAME[p]||p;});
+  var w2txt=h2ps.length?'<p><strong>'+h2ps.join(' and ')+'</strong> sit directly in your wealth house — '+getW2Note(h2ps)+'.</p>':'<p>With no planets in the 2nd house, your wealth is governed entirely by the 2nd lord\'s condition — study its placement carefully.</p>';
+  return '<div class="ck-hero-line">"Wealth in your chart is not a lottery — it is a craft compounded year by patient year."</div>'+
+    '<div class="ck-stat-row"><div class="ck-stat"><div class="ck-stat-label">2nd House</div><div class="ck-stat-value">'+h2+'</div></div><div class="ck-stat"><div class="ck-stat-label">11th House</div><div class="ck-stat-value">'+h11+'</div></div><div class="ck-stat"><div class="ck-stat-label">2nd House</div><div class="ck-stat-value">'+(h2ps.length?h2ps.join(' + '):'Empty')+'</div></div></div>'+
+    '<div class="ck-card"><div class="ck-eyebrow">2nd House — Artha</div><h3 class="ck-card-title">Wealth Through '+h2+' Energy</h3><div class="ck-card-body"><p>Your 2nd house of personal wealth is <strong>'+h2+'</strong>. Income is closely tied to how you communicate, negotiate, and exchange.</p>'+w2txt+'</div></div>'+
+    '<div class="ck-card ck-card-rose"><div class="ck-eyebrow">11th House — Gains</div><h3 class="ck-card-title">Gains Through '+h11+' Networks</h3><div class="ck-card-body"><p>Your 11th house of gains falls in <strong>'+h11+'</strong>. '+(h11ps.length?'<strong>'+h11ps.join(', ')+'</strong> here colour how abundance flows in.':'')+' '+(WEALTH_H11[h11]||'Gains follow the energy of this sign\'s deepest qualities')+'.</p></div></div>'+
+    '<div class="ck-ts-grid"><div class="ck-ts ck-ts-hard"><div class="ck-ts-label">Hard Truth</div><p>Impulse spending — especially during emotionally intense weeks — can quietly undermine the compounding your chart is built for. The gap between what you earn and what you keep deserves attention.</p></div><div class="ck-ts ck-ts-great"><div class="ck-ts-label">Great Strength</div><p>Your chart is built for wealth that compounds slowly and holds. The architecture is sound — what it asks for is patience and consistency rather than speed.</p></div></div>'+
+    '<div class="ck-remedy"><div class="ck-remedy-title">Wealth Upayas</div><ul><li>Automate saving on payday before the money feels available — this routes around impulse patterns.</li><li>Before any investment that feels urgent or exciting, sit with it for 3 full days — your gains house rewards patience, not speed.</li><li>Thursdays: a small act of generosity or study strengthens Jupiter, which governs expansion.</li></ul></div>';
+}
+
+function getW2Note(ps){
+  if(ps.indexOf('Jupiter')>=0&&ps.indexOf('Saturn')>=0)return 'growth and discipline stand guard — a genuinely strong signature for compounding wealth';
+  if(ps.indexOf('Jupiter')>=0)return 'Jupiter here is a classic wealth-house blessing — expansion and optimism colour your financial story';
+  if(ps.indexOf('Saturn')>=0)return 'Saturn demands patience but rewards consistency with lasting financial structure';
+  if(ps.indexOf('Venus')>=0)return 'Venus here — income may come through beauty, luxury, or relationship';
+  return 'these planets colour how wealth accumulates and what it means to you';
+}
+
+/* MAIN GENERATE */
+function generate(form){
+  var name=form.name, gender=form.gender, dob=form.dob, tob=form.tob, place=form.place, userLat=form.lat;
+  var parts=dob.split('-'); var year=+parts[0],month=+parts[1],day=+parts[2];
+  var hr = (form.hr !== undefined) ? form.hr : (+tob.split(':')[0]);
+  var mn = (form.mn !== undefined) ? form.mn : (+tob.split(':')[1]);
+  var dobDate=new Date(year,month-1,day);
+
+  var loc=lookupCity(place);
+  var lat=userLat?parseFloat(userLat):loc.lat;
+  var lng=loc.lng;
+
+  /* Julian Date - UT approx using lng/15 as TZ offset */
+  var tzOffset=-lng/15;
+  var utHr=hr+mn/60+tzOffset;
+  var jd=toJD(year,month,day,utHr);
+
+  /* Planet longitudes → sidereal */
+  var trop=planetLon(jd);
+  var ay=ayanamsa(jd);
+  var planetsLon={};
+  for(var p in trop) planetsLon[p]=norm(trop[p]-ay);
+
+  /* Ascendant */
+  var ascTrop=calcAsc(jd,lat,lng);
+  planetsLon['As']=norm(ascTrop-ay);
+
+  /* Signs */
+  var lagnaIdx=signOf(planetsLon['As']);
+  var moonIdx=signOf(planetsLon['Mo']);
+  var sunIdx=signOf(planetsLon['Su']);
+  var lagnaSign=ZODIAC[lagnaIdx];
+  var moonSign=ZODIAC[moonIdx];
+  var sunSign=ZODIAC[sunIdx];
+  var lagnaRuler=RULERS[lagnaIdx];
+  var moonNakIdx=nakOf(planetsLon['Mo']);
+  var moonNak=NAKSHATRA[moonNakIdx];
+  var lagnaNakIdx=nakOf(planetsLon['As']);
+  var lagnaNak=NAKSHATRA[lagnaNakIdx];
+
+  /* Houses */
+  var houses=buildHouses(planetsLon['As'],planetsLon);
+  var hSigns=houses.hSigns; var pHouse=houses.pHouse;
+
+  /* Dasha */
+  var dashas=calcDasha(planetsLon['Mo'],dobDate);
+  var cd=currentDasha(dashas); var nd=nextDasha(dashas);
+
+  var data={name:name,gender:gender,dob:dob,tob:tob,place:place,lat:lat,lng:lng,jd:jd,planetsLon:planetsLon,lagnaSign:lagnaSign,moonSign:moonSign,sunSign:sunSign,lagnaRuler:lagnaRuler,moonNak:moonNak,lagnaNak:lagnaNak,hSigns:hSigns,pHouse:pHouse,dashas:dashas};
+
+  /* Render chart */
+  renderChart(hSigns,pHouse,planetsLon);
+
+  /* Header */
+  document.getElementById('r-name').textContent=name+"'s Kundali, Decoded";
+  document.getElementById('r-bio').textContent=gender+' · born '+dayName(dobDate)+', '+dobDate.toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})+' · '+tob+' · '+place;
+
+  /* Badges */
+  var bHtml=[
+    '<div class="ck-badge">'+ZODIAC_SYM[sunIdx]+' Sun in '+sunSign+'</div>',
+    '<div class="ck-badge">Moon in '+moonSign+' &middot; '+moonNak+'</div>',
+    '<div class="ck-badge">&uarr; '+lagnaSign+' Lagna &middot; '+lagnaNak+'</div>',
+  ];
+  document.getElementById('r-badges').innerHTML=bHtml.join('');
+
+  /* Facts */
+  var fHtml=[];
+  if(cd) fHtml.push('<span>Mahadasha: <b>'+PNAME[cd.planet]+'</b></span>');
+  if(nd) fHtml.push('<span>Next Dasha: <b>'+PNAME[nd.planet]+'</b> from '+fmtDate(nd.start)+'</span>');
+  fHtml.push('<span>Age: <b>'+calcAge(dobDate)+'</b></span>');
+  document.getElementById('r-facts').innerHTML=fHtml.join('');
+
+  window._kd=data;
+  renderTab('overview',data);
+}
+
+function renderTab(id,data){
+  data=data||window._kd;
+  var gens={overview:genOverview,career:genCareer,love:genLove,health:genHealth,wealth:genWealth};
+  document.getElementById('tab-content').innerHTML=(gens[id]||genOverview)(data);
+}
+
+/* TAB NAV */
+document.getElementById('tab-nav').addEventListener('click',function(e){
+  var btn=e.target.closest('.ck-tab'); if(!btn)return;
+  document.querySelectorAll('.ck-tab').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  renderTab(btn.dataset.tab);
+});
+
+/* FORM SUBMIT */
+document.getElementById('kundali-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  var name=document.getElementById('f-name').value.trim();
+  var gender=document.getElementById('f-gender').value;
+
+  var dDay=parseInt(document.getElementById('f-dob-day').value,10);
+  var dMonth=parseInt(document.getElementById('f-dob-month').value,10);
+  var dYear=parseInt(document.getElementById('f-dob-year').value,10);
+  var dobStr = dYear + '-' + (dMonth < 10 ? '0' + dMonth : dMonth) + '-' + (dDay < 10 ? '0' + dDay : dDay);
+
+  var rawHr=parseInt(document.getElementById('f-tob-hr').value,10);
+  var rawMn=parseInt(document.getElementById('f-tob-min').value,10);
+  var ampm=document.getElementById('f-tob-ampm').value;
+
+  var hr = rawHr;
+  if(ampm === 'PM' && hr < 12) hr += 12;
+  if(ampm === 'AM' && hr === 12) hr = 0;
+  var tobStr = (rawHr < 10 ? '0' + rawHr : rawHr) + ':' + (rawMn < 10 ? '0' + rawMn : rawMn) + ' ' + ampm;
+
+  var place=document.getElementById('f-place').value.trim();
+  var lat=document.getElementById('f-lat').value.trim();
+  if(!name||!place){alert('Please fill in all required fields.');return;}
+  var loading=document.getElementById('loading'); loading.classList.add('show');
+  setTimeout(function(){
+    try{
+      generate({name:name,gender:gender,dob:dobStr,tob:tobStr,hr:hr,mn:rawMn,place:place,lat:lat});
+      document.getElementById('screen-form').style.display='none';
+      document.getElementById('screen-result').style.display='block';
+      window.scrollTo(0,0);
+    }catch(err){console.error(err);alert('Could not generate chart. Please check your inputs.');}
+    loading.classList.remove('show');
+  },700);
+});
+
+/* BACK BUTTON */
+document.getElementById('btn-back').addEventListener('click',function(){
+  document.getElementById('screen-result').style.display='none';
+  document.getElementById('screen-form').style.display='flex';
+  window.scrollTo(0,0);
+});
+
+/* CITY AUTOCOMPLETE */
+(function(){
+  var dl=document.getElementById('cities-list');
+  Object.keys(CITIES).forEach(function(c){
+    var opt=document.createElement('option');
+    opt.value=c.replace(/\b\w/g,function(l){return l.toUpperCase();});
+    dl.appendChild(opt);
+  });
+})();
+
+/* POPULATE YEARS (1940 - CURRENT) */
+(function(){
+  var ySelect = document.getElementById('f-dob-year');
+  var curYear = new Date().getFullYear();
+  for(var y = curYear; y >= 1940; y--){
+    var opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    if(y === 1998) opt.selected = true;
+    ySelect.appendChild(opt);
+  }
+})();
+
+/* SUPABASE SAVE CHART */
+var SUPABASE_URL = 'https://qvvgiayrwagpcrluegot.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_F9-HQwvO02BIVwbgTmrY7w_Imb3fw9X';
+
+document.getElementById('btn-save').addEventListener('click', function(){
+  if(!window._kd){ alert('No chart generated to save.'); return; }
+  var d = window._kd;
+  var record = {
+    name: d.name,
+    gender: d.gender,
+    dob: d.dob,
+    tob: d.tob,
+    place: d.place,
+    lagna_sign: d.lagnaSign,
+    moon_sign: d.moonSign,
+    sun_sign: d.sunSign,
+    moon_nak: d.moonNak,
+    lagna_nak: d.lagnaNak,
+    chart_data: {
+      planetsLon: d.planetsLon,
+      hSigns: d.hSigns,
+      pHouse: d.pHouse
+    }
+  };
+
+  fetch(SUPABASE_URL + '/rest/v1/kundali_charts', {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(record)
+  }).then(function(res){
+    if(!res.ok) return res.text().then(function(t){ throw new Error(t); });
+    return res.json();
+  }).then(function(){
+    alert('Chart saved to Supabase database successfully! ✦');
+  }).catch(function(err){
+    console.error('Supabase save error:', err);
+    alert('Save status: ' + err.message);
+  });
+});
+</script>
+</body>
+</html>
